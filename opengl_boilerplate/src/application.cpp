@@ -22,28 +22,30 @@
 #include "imgui/imgui_impl_glfw.h"
 #include "imgui/imgui_impl_opengl3.h"
 
+#include "tests/test_clear_colour.h"
+#include "tests/test_texture2D.h"
+#include "tests/test_batch_rendering.h"
+
 int main(void)
 {
     GLFWwindow* window;
 
-    /* Initialize the library */
     if (!glfwInit())
         return -1;
 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_RESIZABLE, 1);
 
 
-    /* Create a windowed mode window and its OpenGL context */
-    window = glfwCreateWindow(960, 540, "Hello World", NULL, NULL);
+    window = glfwCreateWindow(1280, 720, "OpenGL Sandbox", NULL, NULL);
     if (!window)
     {
         glfwTerminate();
         return -1;
     }
 
-    /* Make the window's context current */
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1);
 
@@ -52,50 +54,9 @@ int main(void)
 
     std::cout << glGetString(GL_VERSION) << std::endl;
     {
-        float positions[] = {
-            100.0f, 100.0f, 0.0f, 0.0f,
-            300.0f, 100.0f, 1.0f, 0.0f,
-            300.0f, 300.0f, 1.0f, 1.0f,
-            100.0f, 300.0f, 0.0f, 1.0f
-        };
-
-        unsigned int indices[] = {
-            0, 1, 2,
-            2, 3, 0
-        };
-
-        glcall(glEnable(GL_BLEND));
-        glcall(glBlendFunc(GL_ONE, GL_ONE));
-
-        VertexArray va;
-        VertexBuffer vb(positions, 4 * 4 * sizeof(float));
-        VertexBufferLayout layout;
-        layout.push<float>(2);
-        layout.push<float>(2);
-        va.add_buffer(vb, layout);
-
-
-        IndexBuffer ib(indices, 6);
-
-        glm::mat4 proj = glm::ortho(0.0f, 960.0f, 0.0f, 540.0f, -1.0f, 1.0f);
-        glm::mat4 view = glm::translate(glm::mat4(1.0f), glm::vec3(-100.0f, 0.0f, 0.0f));
-
-
-        Shader shader("res/shaders/basic.shader");
-        shader.bind();
-        shader.set_uniform4f("u_colour", 0.8f, 0.3f, 0.8f, 1.0f);
-        
-
-        Texture texture("res/textures/tex1.png");
-        texture.bind();
-        shader.set_uniform1i("u_texture", 0);
-
-        va.unbind();
-        vb.unbind();
-        ib.unbind();
-        shader.unbind();
-
+     
         Renderer renderer;
+
 
         IMGUI_CHECKVERSION();
         ImGui::CreateContext();
@@ -103,59 +64,48 @@ int main(void)
         ImGui::StyleColorsDark();
         ImGui_ImplOpenGL3_Init((char*)glGetString(GL_NUM_SHADING_LANGUAGE_VERSIONS));
 
-        glm::vec3 translation(200.0f, 200.0f, 0.0f);
+        test::Test* current_test = nullptr;
+        test::TestMenu* test_menu = new test::TestMenu(current_test);
+        current_test = test_menu;
 
-        bool show_demo_window = true;
-        bool show_another_window = false;
-        ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+        test_menu->register_test<test::TestClearColour>("Clear Colour");
+        test_menu->register_test<test::TestTexture2D>("Texture 2D");
+        test_menu->register_test<test::TestBatchRendering>("Batch Rendering");
 
-        float r = 0.0f;
-        float increment = 0.05f;
-
-
-        /* Loop until the user closes the window */
         while (!glfwWindowShouldClose(window))
         {
-            /* Render here */
             renderer.clear();
 
             ImGui_ImplOpenGL3_NewFrame();
             ImGui_ImplGlfw_NewFrame();
             ImGui::NewFrame();
 
-            glm::mat4 model = glm::translate(glm::mat4(1.0f), translation);
-            glm::mat4 mvp = proj * view * model;
-
-            shader.bind();
-            shader.set_uniform4f("u_colour", r, 0.3f, 0.8f, 1.0f);
-            shader.set_uniformmat4f("u_mvp", mvp);
-
-            renderer.draw(va, ib, shader);
-
-            if (r > 1.0f)
-                increment = -0.05f;
-            else if (r < 0.0f)
-                increment = 0.05f;
-
-            r += increment;
-
+            if (current_test)
             {
-                
-                ImGui::SliderFloat3("float", &translation.x, 0.0f, 960.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
-
-                ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+                current_test->on_update(0.0f);
+                current_test->on_render();
+                ImGui::Begin("Menu");
+                if (current_test != test_menu && ImGui::Button("<-"))
+                {
+                    delete current_test;
+                    current_test = test_menu;
+                }
+                current_test->on_imgui_render();
+                ImGui::End();
             }
+
 
             ImGui::Render();
             ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
-            /* Swap front and back buffers */
             glfwSwapBuffers(window);
 
-            /* Poll for and process events */
             glfwPollEvents();
         }
 
+        if (current_test != test_menu)
+            delete test_menu;
+        delete current_test;
     }
 
     ImGui_ImplOpenGL3_Shutdown();

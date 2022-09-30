@@ -14,7 +14,7 @@ public:
 	Texture(const std::string& filepath);
 	~Texture();
 
-	void bind(unsigned int slot = 0) const;
+	void bind(int slot = 0) const;
 	void unbind() const;
 
 	inline int get_width() const { return m_width; }

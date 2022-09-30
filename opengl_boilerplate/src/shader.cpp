@@ -121,6 +121,11 @@ void Shader::set_uniform1i(const std::string& name, int value)
     glcall(glUniform1i(get_uniform_location(name), value));
 }
 
+void Shader::set_uniform1iv(const std::string& name, const GLint count, int* values)
+{
+    glcall(glUniform1iv(get_uniform_location(name), count, values));
+}
+
 int Shader::get_uniform_location(const std::string& name)
 {
     if (m_uniform_location_cache.find(name) != m_uniform_location_cache.end())
