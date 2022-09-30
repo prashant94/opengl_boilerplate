@@ -24,7 +24,7 @@
     <ProjectGuid>{e8602d8b-5b78-4ea8-bcaa-c4ff781a8e2e}</ProjectGuid>
     <RootNamespace>openglintro</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
-    <ProjectName>opengl_boilerplate</ProjectName>
+    <ProjectName>opengl_sandbox</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">

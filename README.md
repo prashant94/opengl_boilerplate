@@ -1,1 +1,1 @@
-# opengl_boilerplate
+# OpenGL Sandbox
